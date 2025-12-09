@@ -10,7 +10,7 @@ RUN cd /usr/bin && curl -s http://getcomposer.org/installer | php && ln -s /usr/
 
 # install packages
 RUN apt-get update \
-  && apt-get install -y \
+  && apt-get install -y bash ca-certificates curl \
   gcc \
   make \
   git \
@@ -34,7 +34,7 @@ RUN apt-get update \
 COPY php.ini /usr/local/etc/php/
 
 # install stable node and latest npm
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
   && apt-get update \
   && apt-get install -y nodejs \
   && apt-get clean \
@@ -43,3 +43,10 @@ RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - \
 RUN npm install -g n \
   && n stable \
   && npm update -g npm
+
+# Copy and set entrypoint script
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm"]

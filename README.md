@@ -12,53 +12,139 @@
 1. **cloneする。**  
    プロジェクトのコピーを自分のコンピュータにダウンロードします。
    ```
-   git clone https://github.com/sho55/php83-nginx-mariadb.git 
-   ```
+# Laravel Docker Environment (PHP 8.3 + Nginx + MariaDB)
 
-2. **docker composeで立ち上げる。**  
-   ダウンロードしたプロジェクトを使って、必要なプログラム（コンテナと呼ばれる）を自動的に起動します。
-   ```
-   cd php83-nginx-mariadb
-   docker compose up -d
-   ```
+Docker環境でLaravelを開発するためのセットアップです。
 
-3. **phpコンテナに入る**  
-   起動したプログラムの中の一つ、PHPを使う部分にアクセスします。
-   ```
-   docker exec -it myapp-php bash
-   ```
+## 構成
 
-4. **laravelをインストール**  
-   PHPを使って、Laravelというツールをセットアップ（インストール）します。
-   ```
-   composer create-project --prefer-dist laravel/laravel my-app
-   ```
+- **PHP**: 8.3-FPM (Composer, Node.js 18含む)
+- **Nginx**: 最新版
+- **MariaDB**: 最新版
+- **ポート**: 
+  - Nginx: `81` (http://localhost:81)
+  - MariaDB: `3306`
+  - Vite: `5173`
 
-5. **phpコンテナから出る**  
-   Laravelのセットアップが終わったら、PHPの部分を終了します。
-   ```
-   exit
-   ```
+## セットアップ手順
 
-6. **docker-compose.ymlを編集する**  
-   設定ファイル（docker-compose.yml）を変更して、プロジェクトの設定を更新します。以下のように`volumes`セクションを編集してください。
-   ```
-     web: 
-    
-       volumes:
-       - - .:/var/www/
-       + - ./my-app:/var/www/
+### 1. 環境変数の設定
 
-     nginx: 
-    
-       volumes:
-       - - .:/var/www/
-       + - ./my-app:/var/www/
-    
-   ```
+`.env` ファイルを作成し、データベース設定を記述してください:
 
-7. **再度docker composeで立ち上げる**  
-   更新した設定で、もう一度プログラムを起動します。
-   ```
-   docker compose up -d
-   ```
+```env
+MYSQL_DATABASE=laravel_db
+MYSQL_ROOT_PASSWORD=root_password
+MYSQL_USER=laravel_user
+MYSQL_PASSWORD=laravel_password
+TZ=Asia/Tokyo
+```
+
+### 2. Laravelプロジェクトの作成
+
+```bash
+# Dockerコンテナを起動
+docker compose up -d
+
+# PHPコンテナに入る
+docker exec -it myapp-php bash
+
+# Laravelプロジェクトを作成
+composer create-project laravel/laravel my-app
+cd my-app
+
+# パーミッションの確認（自動で設定されます）
+ls -la storage
+ls -la bootstrap/cache
+```
+
+### 3. Laravel環境変数の設定
+
+`my-app/.env` ファイルを編集してデータベース接続を設定:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=mariadb
+DB_PORT=3306
+DB_DATABASE=laravel_db
+DB_USERNAME=laravel_user
+DB_PASSWORD=laravel_password
+```
+
+### 4. アプリケーションの起動
+
+```bash
+# マイグレーション実行
+php artisan migrate
+
+# （オプション）開発サーバーの起動
+# Nginxを使用する場合は不要
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+ブラウザで http://localhost:81 にアクセスしてください。
+
+## ディレクトリ構造
+
+```
+.
+├── docker-compose.yml          # Docker Compose設定
+├── docker-config/
+│   ├── nginx/
+│   │   ├── Dockerfile
+│   │   └── default.conf       # Nginx設定
+│   ├── php/
+│   │   ├── Dockerfile
+│   │   ├── entrypoint.sh      # パーミッション自動修正スクリプト
+│   │   └── php.ini
+│   └── mariadb/
+│       └── data/              # データベースデータ（gitignore）
+└── my-app/                    # Laravelアプリケーション（gitignore）
+```
+
+## 特徴
+
+### 自動パーミッション修正
+
+コンテナ起動時に `entrypoint.sh` スクリプトが自動的に以下のディレクトリのパーミッションを修正します:
+
+- `/var/www/storage`
+- `/var/www/bootstrap/cache`
+- `/var/www/database`
+
+これにより、Laravelのキャッシュやログ、SQLiteデータベースへの書き込みエラーを防ぎます。
+
+## トラブルシューティング
+
+### パーミッションエラーが発生する場合
+
+```bash
+docker exec myapp-php chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/www/database
+docker exec myapp-php chmod -R 775 /var/www/storage /var/www/bootstrap/cache /var/www/database
+```
+
+### コンテナの再ビルド
+
+```bash
+docker compose down
+docker compose up -d --build
+```
+
+## よく使うコマンド
+
+```bash
+# コンテナの起動
+docker compose up -d
+
+# コンテナの停止
+docker compose down
+
+# PHPコンテナに入る
+docker exec -it myapp-php bash
+
+# ログの確認
+docker compose logs -f
+
+# Artisanコマンドの実行
+docker exec myapp-php php artisan [command]
+```

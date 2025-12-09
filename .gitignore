@@ -1,0 +1,16 @@
+# Laravel application directory
+my-app/
+
+# Docker volumes and data
+docker-config/mariadb/data/
+
+# Environment files
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
