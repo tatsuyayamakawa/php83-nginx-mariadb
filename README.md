@@ -6,12 +6,6 @@
 ![Docker](https://img.shields.io/badge/Docker-20.10-blue.svg)
 ![docker-compose](https://img.shields.io/badge/docker--compose-1.29-blue.svg)
 
-
-# Laravelプロジェクトの作成方法
-
-1. **cloneする。**  
-   プロジェクトのコピーを自分のコンピュータにダウンロードします。
-   ```
 # Laravel Docker Environment (PHP 8.3 + Nginx + MariaDB)
 
 Docker環境でLaravelを開発するためのセットアップです。
