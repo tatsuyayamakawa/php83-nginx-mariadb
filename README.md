@@ -50,6 +50,33 @@ cd my-app
 # パーミッションの確認（自動で設定されます）
 ls -la storage
 ls -la bootstrap/cache
+
+# PHPコンテナから出る
+exit
+```
+
+Laravelのセットアップが終わったら、設定ファイル（`docker-compose.yml`）を変更して、プロジェクトの設定を更新します。
+以下のように`volumes`セクションを編集してください。
+
+```diff
+  web: 
+ 
+    volumes:
+-     - .:/var/www/
++     - ./my-app:/var/www/
+
+  nginx: 
+ 
+    volumes:
+-     - .:/var/www
++     - ./my-app:/var/www
+```
+
+編集後、コンテナを再起動します。
+
+```bash
+docker compose down
+docker compose up -d
 ```
 
 ### 3. Laravel環境変数の設定
